@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ef8585">
+<title>班主任工作台</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#fff8ef;color:#4b403a;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;border:0}
+.app{display:flex;min-height:100vh}
+.side{width:240px;min-height:100vh;background:#fffaf5;border-right:1px solid #f0dfd1;padding:20px 14px;position:fixed;left:0;top:0;bottom:0;transition:.25s;z-index:5}
+.side.hide{width:72px}
+.logo{font-size:21px;font-weight:bold;color:#ed7777;padding:10px;white-space:nowrap;overflow:hidden;margin-bottom:15px}
+.logo:first-letter{font-size:30px}
+.nav button{width:100%;display:flex;align-items:center;gap:12px;background:none;padding:12px;border-radius:13px;margin:3px 0;text-align:left;color:#51463f}
+.nav button.active,.nav button:hover{background:#f3918d;color:white}
+.icon{width:25px;text-align:center;font-size:19px}
+.side.hide .nav button{justify-content:center}
+.side.hide .nav button span:last-child{display:none}
+.classbox{background:white;border-radius:16px;padding:13px;text-align:center;margin-top:20px;box-shadow:0 5px 20px #75563a12}
+.side.hide .classbox{display:none}
+.main{margin-left:240px;width:calc(100% - 240px);padding:22px;transition:.25s}
+.side.hide~.main{margin-left:72px;width:calc(100% - 72px)}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+h1{margin:0;font-size:28px}
+h2{font-size:19px;margin:0 0 15px}
+h3{margin:5px 0}
+p{margin:6px 0}
+.muted{color:#95877d}
+.btn{padding:9px 14px;border-radius:11px;background:#fff;border:1px solid #eddfd3;box-shadow:0 3px 10px #76563a10}
+.primary{background:#ef8585;color:white;border-color:#ef8585}
+.yellow{background:#fff1c9}
+.grid{display:grid;gap:15px}
+.stats{grid-template-columns:repeat(4,1fr)}
+.card{background:#fffdf9;border:1px solid #f0e1d4;border-radius:19px;padding:17px;box-shadow:0 7px 25px #76563a0c}
+.stat{display:flex;gap:12px;align-items:center}
+.circle{width:48px;height:48px;border-radius:50%;background:#ffe1dd;display:grid;place-items:center;font-size:22px}
+.stat strong{display:block;font-size:24px}
+.section{margin-top:18px}
+.section-title{font-weight:bold;font-size:18px;margin-bottom:12px}
+.section-title:before{content:"";display:inline-block;width:5px;height:19px;background:#ef8585;border-radius:5px;margin-right:8px;vertical-align:-3px}
+.work{grid-template-columns:repeat(4,1fr)}
+.workcard{min-height:160px}
+.workicon{font-size:42px}
+.workcard .btn{background:#ef8585;color:white;margin-top:8px}
+.lower{grid-template-columns:1.5fr 1fr}
+.week{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:#eadfd6;border-radius:12px;overflow:hidden}
+.day{background:white;padding:12px;min-height:125px;font-size:13px}
+.module{display:none}
+.module.show{display:block}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+input,select,textarea{border:1px solid #eadcd0;border-radius:10px;padding:9px 11px;background:white;outline:none}
+.tablewrap{overflow:auto}
+table{width:100%;border-collapse:collapse;background:white}
+th,td{padding:10px;border-bottom:1px solid #f1e7df;text-align:left;white-space:nowrap}
+th{background:#fff3e6}
+.seats{display:grid;grid-template-columns:repeat(6,1fr);gap:9px}
+.seat{height:75px;border:2px dashed #eadbd0;border-radius:13px;background:white;text-align:center;padding:10px}
+.seat:hover{background:#fff0e9}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{padding:7px 11px;border-radius:20px;background:#f1ebe5}
+.chip.on{background:#efaaa4;color:white}
+.duty{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.dutyday{border:1px solid #eee0d5;border-radius:14px;padding:12px;background:white}
+.dutyitem{background:#fff3d8;padding:9px;border-radius:9px;margin-top:8px;font-size:13px}
+.metrics{grid-template-columns:repeat(4,1fr)}
+.metric strong{font-size:25px}
+.bars{height:190px;display:flex;align-items:flex-end;gap:15px}
+.bar{flex:1;text-align:center}
+.bar i{display:block;width:45px;margin:auto;background:#ef9b93;border-radius:8px 8px 0 0}
+.pie{width:145px;height:145px;border-radius:50%;margin:15px auto;background:conic-gradient(#ef8585 0 34%,#f4c56b 34% 63%,#9fc6a4 63% 84%,#a9c9df 84%)}
+.leaders{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.leader{background:#fff5ed;border-radius:14px;padding:14px}
+.modal{position:fixed;inset:0;background:#34261f88;display:none;align-items:center;justify-content:center;padding:20px;z-index:20}
+.modal.show{display:flex}
+.modalbox{background:#fffdf9;border-radius:20px;padding:20px;width:min(550px,100%);max-height:85vh;overflow:auto}
+.close{text-align:right}
+@media(max-width:900px){
+.side{width:72px}
+.side .nav button{justify-content:center}
+.side .nav button span:last-child,.side .logo b,.side .classbox{display:none}
+.main{margin-left:72px;width:calc(100% - 72px)}
+.stats,.metrics{grid-template-columns:repeat(2,1fr)}
+.work{grid-template-columns:repeat(2,1fr)}
+.lower{grid-template-columns:1fr}
+.duty{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:600px){
+.side{display:none}
+.main,.side.hide~.main{margin-left:0;width:100%;padding:14px}
+.header{align-items:flex-start}
+h1{font-size:24px}
+.stats,.metrics,.work,.leaders{grid-template-columns:1fr}
+.seats{grid-template-columns:repeat(3,1fr)}
+.duty{grid-template-columns:1fr}
+.week{overflow:auto}
+.day{min-width:120px}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<aside class="side" id="side">
+<div class="logo">♥ <b>班主任工作台</b></div>
+
+<nav class="nav" id="nav">
+<button class="active" data-page="home"><span class="icon">⌂</span><span>工作台</span></button>
+<button data-page="seat"><span class="icon">▦</span><span>座次表</span></button>
+<button data-page="duty"><span class="icon">☑</span><span>值日表</span></button>
+<button data-page="score"><span class="icon">▥</span><span>成绩分析</span></button>
+<button data-page="students"><span class="icon">♙</span><span>花名册</span></button>
+<button data-page="leaders"><span class="icon">♟</span><span>班委名单</span></button>
+<button data-page="parents"><span class="icon">☎</span><span>家长联系方式</span></button>
+<button data-page="course"><span class="icon">▣</span><span>课程表</span></button>
+</nav>
+
+<div class="classbox">
+<b>高一（1）班</b><br>
+<small>45名学生 · 8个小组</small>
+</div>
+</aside>
+
+<main class="main">
+
+<header class="header">
+<div>
+<h1 id="title">工作台</h1>
+<p class="muted">欢迎回来，班主任！ ☀️</p>
+</div>
+<div>
+<button class="btn" onclick="toggleSide()">☰</button>
+<button class="btn primary" onclick="edit()">✎ 编辑</button>
+</div>
+</header>
+
+<!-- 工作台 -->
+<section id="home" class="module show">
+
+<div class="grid stats">
+<div class="card stat"><div class="circle">👥</div><div>学生总数<strong>45</strong></div></div>
+<div class="card stat"><div class="circle">👨‍👩‍👧</div><div>小组数量<strong>8</strong></div></div>
+<div class="card stat"><div class="circle">📅</div><div>本周值日<strong>第10周</strong></div></div>
+<div class="card stat"><div class="circle">✓</div><div>待办事项<strong>3</strong></div></div>
+</div>
+
+<div class="section">
+<div class="section-title">常规工作</div>
+<div class="grid work" id="routine"></div>
+</div>
+
+<div class="section">
+<div class="section-title">特色工作</div>
+<div class="grid work" id="special"></div>
+</div>
+
+<div class="grid lower section">
+<div class="card">
+<h2>本周值日安排</h2>
+<div class="week">
+<div class="day"><b>周一</b><p>第1组</p><p>教室打扫<br>07:30–08:00</p></div>
+<div class="day"><b>周二</b><p>第2组</p><p>教室打扫<br>07:30–08:00</p></div>
+<div class="day"><b>周三</b><p>第3组</p><p>教室打扫<br>07:30–08:00</p></div>
+<div class="day"><b>周四</b><p>第4组</p><p>教室打扫<br>07:30–08:00</p></div>
+<div class="day"><b>周五</b><p>第5组</p><p>教室打扫<br>07:30–08:00</p></div>
+</div>
+</div>
+
+<div class="card">
+<h2>班级小贴士</h2>
+<p style="font-size:20px;line-height:1.8">教育不是注满一桶水，而是点燃一把火。</p>
+<p class="muted">—— 苏格拉底</p>
+</div>
+</div>
+
+</section>
+
+<!-- 座次表 -->
+<section id="seat" class="module">
+<div class="card">
+<h2>座次表 · 6 × 8</h2>
+
+<div class="toolbar">
+<input id="searchSeat" placeholder="搜索学生姓名" oninput="renderSeats()">
+<button class="btn primary" onclick="shuffle()">随机调座</button>
+</div>
+
+<div class="chips" id="chips"></div>
+<div class="seats" id="seats"></div>
+<p class="muted">点击座位可以编辑，拖动学生可调整座位。</p>
+</div>
+</section>
+
+<!-- 值日 -->
+<section id="duty" class="module">
+<div class="card">
+<h2>值日表</h2>
+<div class="toolbar">
+<button class="btn" onclick="week(-1)">‹ 上周</button>
+<button class="btn yellow" id="week">第10周</button>
+<button class="btn" onclick="week(1)">下周 ›</button>
+<button class="btn primary" onclick="notice('已复制本周排班')">批量复制排班</button>
+</div>
+<div class="duty" id="dutyList"></div>
+</div>
+</section>
+
+<!-- 成绩 -->
+<section id="score" class="module">
+<div class="grid metrics">
+<div class="card metric">班级平均分<strong>82.6</strong></div>
+<div class="card metric">最高分<strong>98</strong></div>
+<div class="card metric">优秀率<strong>35.6%</strong></div>
+<div class="card metric">及格率<strong>93.3%</strong></div>
+</div>
+
+<div class="grid lower section">
+<div class="card">
+<h2>学科平均分</h2>
+<div class="bars" id="bars"></div>
+</div>
+<div class="card">
+<h2>成绩等级</h2>
+<div class="pie"></div>
+<p style="text-align:center">A 34%　B 29%　C 21%　D 16%</p>
+</div>
+</div>
+
+<div class="card section">
+<h2>成绩排名</h2>
+<div class="toolbar">
+<input placeholder="搜索学生" oninput="filter(this,'scoreTable')">
+<button class="btn primary" onclick="edit()">录入/修改成绩</button>
+</div>
+<div class="tablewrap">
+<table id="scoreTable">
+<thead><tr><th>排名</th><th>姓名</th><th>语文</th><th>数学</th><th>英语</th><th>物理</th><th>总分</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+</section>
+
+<!-- 花名册 -->
+<section id="students" class="module">
+<div class="card">
+<h2>花名册</h2>
+<div class="toolbar">
+<input placeholder="搜索姓名/学号" oninput="filter(this,'studentTable')">
+<button class="btn primary" onclick="addStudent()">＋ 添加学生</button>
+</div>
+<div class="tablewrap">
+<table id="studentTable">
+<thead><tr><th>学号</th><th>姓名</th><th>性别</th><th>小组</th><th>电话</th><th>操作</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+</section>
+
+<!-- 班委 -->
+<section id="leaders" class="module">
+<div class="card">
+<h2>班委名单</h2>
+<div class="leaders" id="leaderList"></div>
+<button class="btn primary" onclick="edit()">编辑调整</button>
+</div>
+</section>
+
+<!-- 家长 -->
+<section id="parents" class="module">
+<div class="card">
+<h2>家长通讯录</h2>
+<div class="toolbar">
+<input placeholder="搜索学生/家长/电话" oninput="filter(this,'parentTable')">
+<button class="btn primary" onclick="addParent()">＋ 添加联系人</button>
+</div>
+<div class="tablewrap">
+<table id="parentTable">
+<thead><tr><th>学生</th><th>家长</th><th>关系</th><th>电话</th><th>备注</th><th>操作</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+</section>
+
+<!-- 课程 -->
+<section id="course" class="module">
+<div class="card">
+<h2>课程表</h2>
+<div class="toolbar">
+<button class="btn yellow" id="odd" onclick="toggleOdd()">当前：单周</button>
+<button class="btn primary" onclick="notice('已复制课程安排')">批量复制课程</button>
+</div>
+<div class="tablewrap">
+<table id="courseTable">
+<thead><tr><th>节次</th><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+</section>
+
+</main>
+</div>
+
+<div class="modal" id="modal">
+<div class="modalbox">
+<div class="close"><button class="btn" onclick="closeModal()">✕</button></div>
+<h2 id="modalTitle"></h2>
+<p id="modalText"></p>
+<textarea style="width:100%;height:130px" placeholder="请输入内容……"></textarea>
+<br><br>
+<button class="btn primary" onclick="save()">保存</button>
+</div>
+</div>
+
+<script>
+const KEY="teacherDesk";
+let data=JSON.parse(localStorage.getItem(KEY)||"null");
+
+if(!data){
+data={
+students:Array.from({length:45},(_,i)=>({
+id:String(i+1).padStart(2,"0"),
+name:["陈思远","林雨桐","王子轩","李欣怡","周宇航","赵梓涵","张博文","刘诗涵","黄俊杰","杨可欣","吴昊","徐嘉宁","孙浩然","胡雅婷","朱俊杰"][i%15]+(i>=15?Math.floor(i/15):""),
+sex:i%2?"女":"男",
+group:i%8+1,
+phone:"138****"+(1000+i)
+})),
+week:10,
+odd:true
+};
+localStorage.setItem(KEY,JSON.stringify(data));
+}
+
+function saveData(){
+localStorage.setItem(KEY,JSON.stringify(data));
+}
+
+function save(){
+saveData();
+closeModal();
+alert("保存成功！");
+}
+
+function notice(t){
+alert(t);
+saveData();
+}
+
+function toggleSide(){
+document.getElementById("side").classList.toggle("hide");
+}
+
+document.getElementById("nav").onclick=function(e){
+let b=e.target.closest("button");
+if(!b)return;
+document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
+b.classList.add("active");
+document.querySelectorAll(".module").forEach(x=>x.classList.remove("show"));
+document.getElementById(b.dataset.page).classList.add("show");
+document.getElementById("title").textContent=b.innerText.trim();
+};
+
+const routine=[
+["考勤","📋","今日出勤与请假记录"],
+["纪律","🛡️","课堂纪律表现"],
+["作业","📖","作业完成情况"],
+["课间巡查","🔎","课间巡查记录"]
+];
+
+const special=[
+["班会","🧑‍🏫","班会记录与计划"],
+["家校沟通","💬","家校沟通记录"],
+["学生成长","🌱","学生成长档案"],
+["班级活动","🎈","班级活动记录"]
+];
+
+function workCards(id,list){
+document.getElementById(id).innerHTML=list.map(x=>
+`<div class="card workcard">
+<div class="workicon">${x[1]}</div>
+<h3>${x[0]}</h3>
+<p class="muted">${x[2]}</p>
+<button class="btn" onclick="openModal('${x[0]}','${x[2]}')">查看详情</button>
+</div>`).join("");
+}
+
+function openModal(t,p){
+document.getElementById("modalTitle").textContent=t;
+document.getElementById("modalText").textContent=p;
+document.getElementById("modal").classList.add("show");
+}
+
+function closeModal(){
+document.getElementById("modal").classList.remove("show");
+}
+
+function renderSeats(){
+let q=(document.getElementById("searchSeat").value||"").toLowerCase();
+let group=window.group||0;
+
+document.getElementById("chips").innerHTML=
+`<button class="chip ${group==0?"on":""}" onclick="selectGroup(0)">全部</button>`+
+[1,2,3,4,5,6,7,8].map(g=>
+`<button class="chip ${group==g?"on":""}" onclick="selectGroup(${g})">第${g}组</button>`
+).join("");
+
+let arr=data.students.filter(s=>
+(!group||s.group==group)&&
+(!q||s.name.toLowerCase().includes(q)||s.id.includes(q))
+);
+
+document.getElementById("seats").innerHTML=
+Array.from({length:48},(_,i)=>{
+let s=arr[i];
+return `<div class="seat" draggable="${!!s}" onclick="seatEdit(${i})">
+${s?`<b>${s.name}</b><br><small>第${s.group}组</small>`:`<small>空座位 ${i+1}</small>`}
+</div>`;
+}).join("");
+}
+
+function selectGroup(g){
+window.group=g;
+renderSeats();
+}
+
+function seatEdit(i){
+openModal("编辑座位","当前座位："+(i+1));
+}
+
+function shuffle(){
+data.students.sort(()=>Math.random()-.5);
+saveData();
+renderSeats();
+notice("已随机调整座位");
+}
+
+function week(n){
+data.week+=n;
+document.getElementById("week").textContent="第"+data.week+"周";
+saveData();
+}
+
+function renderDuty(){
+let names=data.students;
+document.getElementById("dutyList").innerHTML=["一","二","三","四","五"].map((d,i)=>
+`<div class="dutyday">
+<b>周${d}</b>
+<div class="dutyitem">07:30–08:00<br>${names[i].name}、${names[i+5].name}</div>
+<div class="dutyitem">12:20–12:40<br>${names[i+10].name}、${names[i+15].name}</div>
+<div class="dutyitem">16:40–17:00<br>${names[i+20].name}</div>
+</div>`).join("");
+}
+
+function renderScores(){
+document.querySelector("#scoreTable tbody").innerHTML=data.students.map((s,i)=>{
+let a=80+i%19,b=76+(i*3)%23,c=82+(i*2)%16,d=78+(i*4)%20;
+return `<tr><td>${i+1}</td><td>${s.name}</td><td>${a}</td><td>${b}</td><td>${c}</td><td>${d}</td><td>${a+b+c+d}</td></tr>`;
+}).join("");
+
+let subs=["语文","数学","英语","物理","化学"];
+document.getElementById("bars").innerHTML=subs.map((s,i)=>
+`<div class="bar"><i style="height:${90+i*15}px"></i><small>${s}</small></div>`
+).join("");
+}
+
+function filter(input,id){
+let q=input.value.toLowerCase();
+document.querySelectorAll("#"+id+" tbody tr").forEach(r=>{
+r.style.display=r.innerText.toLowerCase().includes(q)?"":"none";
+});
+}
+
+function renderStudents(){
+document.querySelector("#studentTable tbody").innerHTML=data.students.map(s=>
+`<tr>
+<td>${s.id}</td>
+<td>${s.name}</td>
+<td>${s.sex}</td>
+<td>第${s.group}组</td>
+<td>${s.phone}</td>
+<td><button class="btn" onclick="editStudent('${s.id}')">编辑</button></td>
+</tr>`).join("");
+}
+
+function addStudent(){
+let name=prompt("请输入学生姓名");
+if(!name)return;
+data.students.push({
+id:String(data.students.length+1).padStart(2,"0"),
+name:name,
+sex:"男",
+group:1,
+phone:""
+});
+saveData();
+renderStudents();
+renderSeats();
+}
+
+function editStudent(id){
+let s=data.students.find(x=>x.id==id);
+let n=prompt("修改学生姓名",s.name);
+if(n){
+s.name=n;
+saveData();
+renderStudents();
+renderSeats();
+}
+}
+
+function renderLeaders(){
+let list=[
+["班长","王子轩","统筹班级事务、沟通师生"],
+["学习委员","林雨桐","组织学习交流、反馈学情"],
+["纪律委员","周宇航","协助维护课堂纪律"],
+["生活委员","陈思远","负责班级卫生与生活事务"],
+["体育委员","赵梓涵","组织体育活动"],
+["文艺委员","李欣怡","组织班级文化活动"]
+];
+
+document.getElementById("leaderList").innerHTML=list.map(x=>
+`<div class="leader"><h3>${x[0]}</h3><b>${x[1]}</b><p>${x[2]}</p></div>`
+).join("");
+}
+
+function renderParents(){
+document.querySelector("#parentTable tbody").innerHTML=data.students.slice(0,20).map((s,i)=>
+`<tr>
+<td>${s.name}</td>
+<td>${["陈女士","林先生","王女士","李先生"][i%4]}</td>
+<td>${i%2?"父亲":"母亲"}</td>
+<td>139****${2000+i}</td>
+<td>常规联系</td>
+<td><button class="btn" onclick="openModal('编辑联系人','修改家长姓名、关系、电话和备注')">编辑</button></td>
+</tr>`).join("");
+}
+
+function addParent(){
+openModal("添加家长联系人","填写学生、家长、关系、电话与备注");
+}
+
+function renderCourses(){
+let subjects=["语文","数学","英语","物理","化学","生物","历史","地理","政治"];
+document.querySelector("#courseTable tbody").innerHTML=
+Array.from({length:9},(_,i)=>
+`<tr><td>第${i+1}节</td>`+
+[0,1,2,3,4].map(d=>
+`<td>${subjects[(i+d+(data.odd?0:2))%subjects.length]}</td>`
+).join("")+
+`</tr>`
+).join("");
+}
+
+function toggleOdd(){
+data.odd=!data.odd;
+document.getElementById("odd").textContent="当前："+(data.odd?"单周":"双周");
+renderCourses();
+saveData();
+}
+
+function edit(){
+openModal("编辑模式","这里可以编辑当前模块的数据。");
+}
+
+workCards("routine",routine);
+workCards("special",special);
+renderSeats();
+renderDuty();
+renderScores();
+renderStudents();
+renderLeaders();
+renderParents();
+renderCourses();
+</script>
+
+</body>
+</html>
